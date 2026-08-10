@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Citas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Sistema de Citas</h1>
+
+  <section id="crear-seccion">
+    <h2>Solicitar una cita</h2>
+    <form id="form-crear">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" required />
+
+      <label for="contacto">Contacto (email o teléfono)</label>
+      <input type="text" id="contacto" name="contacto" required />
+
+      <label for="fecha_hora">Fecha y hora</label>
+      <input type="datetime-local" id="fecha_hora" name="fecha_hora" required />
+
+      <button type="submit">Solicitar cita</button>
+    </form>
+    <div id="crear-resultado"></div>
+  </section>
+
+  <hr />
+
+  <section id="consultar-seccion">
+    <h2>Consultar estado de una solicitud</h2>
+    <form id="form-consultar">
+      <label for="codigo">Código de seguimiento</label>
+      <input type="text" id="codigo" name="codigo" placeholder="SOL-XXXXXX" required />
+
+      <button type="submit">Consultar</button>
+    </form>
+    <div id="consultar-resultado"></div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

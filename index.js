@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
 const supabase = require("./supabaseClient");
 const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
@@ -7,7 +8,15 @@ const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
 const app = express();
 const PORT = 3000;
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TELEFONO_REGEX = /^[+\d][\d\s-]{7,14}\d$/;
+
+function esContactoValido(contacto) {
+  return EMAIL_REGEX.test(contacto) || TELEFONO_REGEX.test(contacto);
+}
+
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
@@ -19,6 +28,24 @@ app.post("/solicitudes", async (req, res) => {
   if (!nombre || !contacto || !fecha_hora) {
     return res.status(400).json({
       error: "Los campos nombre, contacto y fecha_hora son obligatorios",
+    });
+  }
+
+  if (!esContactoValido(contacto)) {
+    return res.status(400).json({
+      error: "El campo contacto debe ser un email o un teléfono válido",
+    });
+  }
+
+  const fechaHoraParseada = new Date(fecha_hora);
+  if (Number.isNaN(fechaHoraParseada.getTime())) {
+    return res.status(400).json({
+      error: "El campo fecha_hora no es una fecha/hora válida",
+    });
+  }
+  if (fechaHoraParseada.getTime() <= Date.now()) {
+    return res.status(400).json({
+      error: "El campo fecha_hora debe ser una fecha/hora futura",
     });
   }
 
