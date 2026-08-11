@@ -7,6 +7,7 @@ const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
 const { obtenerClima } = require("./clima");
 const { requireAuth } = require("./authMiddleware");
 const { enviarCorreoSolicitudRecibida, enviarCorreoConfirmacion } = require("./resend");
+const { generarFranjasHorarias, esHorarioValido, rangoUtcParaDiaLocal, horaLocal } = require("./horarios");
 
 const app = express();
 const PORT = 3000;
@@ -14,6 +15,8 @@ const PORT = 3000;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO_REGEX = /^[+\d][\d\s-]{7,14}\d$/;
 const FECHA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const CATEGORIAS_VALIDAS = ["Frenos", "Carrocería", "Dirección", "Motor", "Revisión general", "Otro"];
+const ESTADOS_QUE_OCUPAN_FRANJA = ["pendiente", "confirmada"];
 
 function esContactoValido(contacto) {
   return EMAIL_REGEX.test(contacto) || TELEFONO_REGEX.test(contacto);
@@ -34,17 +37,23 @@ app.get("/api/config", (req, res) => {
 });
 
 app.post("/solicitudes", async (req, res) => {
-  const { nombre, contacto, fecha_hora } = req.body;
+  const { nombre, contacto, fecha_hora, categoria } = req.body;
 
-  if (!nombre || !contacto || !fecha_hora) {
+  if (!nombre || !contacto || !fecha_hora || !categoria) {
     return res.status(400).json({
-      error: "Los campos nombre, contacto y fecha_hora son obligatorios",
+      error: "Los campos nombre, contacto, fecha_hora y categoria son obligatorios",
     });
   }
 
   if (!esContactoValido(contacto)) {
     return res.status(400).json({
       error: "El campo contacto debe ser un email o un teléfono válido",
+    });
+  }
+
+  if (!CATEGORIAS_VALIDAS.includes(categoria)) {
+    return res.status(400).json({
+      error: `El campo categoria debe ser una de: ${CATEGORIAS_VALIDAS.join(", ")}`,
     });
   }
 
@@ -60,6 +69,30 @@ app.post("/solicitudes", async (req, res) => {
     });
   }
 
+  if (!esHorarioValido(fecha_hora)) {
+    return res.status(400).json({
+      error:
+        "El horario elegido está fuera de atención (lunes a sábado, 7:00am a 4:30pm, en franjas de 30 minutos)",
+    });
+  }
+
+  const { data: ocupada, error: errorOcupada } = await supabase
+    .from("solicitudes")
+    .select("id")
+    .eq("fecha_hora", fechaHoraParseada.toISOString())
+    .in("estado", ESTADOS_QUE_OCUPAN_FRANJA)
+    .maybeSingle();
+
+  if (errorOcupada) {
+    return res.status(500).json({ error: errorOcupada.message });
+  }
+
+  if (ocupada) {
+    return res.status(409).json({
+      error: "Ese horario ya está reservado, elegí otra franja disponible",
+    });
+  }
+
   const codigo_seguimiento = generarCodigoSeguimiento();
 
   const { data, error } = await supabase
@@ -68,6 +101,7 @@ app.post("/solicitudes", async (req, res) => {
       nombre,
       contacto,
       fecha_hora,
+      categoria,
       codigo_seguimiento,
       estado: "pendiente",
     })
@@ -181,6 +215,58 @@ app.patch("/solicitudes/:codigo/no-show", async (req, res) => {
   }
 
   res.json(data);
+});
+
+app.patch("/solicitudes/:codigo/rechazar", async (req, res) => {
+  const { codigo } = req.params;
+
+  const { data, error } = await supabase
+    .from("solicitudes")
+    .update({ estado: "rechazada" })
+    .eq("codigo_seguimiento", codigo)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  if (!data) {
+    return res.status(404).json({
+      error: `No se encontró ninguna solicitud con el código ${codigo}`,
+    });
+  }
+
+  res.json(data);
+});
+
+app.get("/disponibilidad", async (req, res) => {
+  const { fecha } = req.query;
+
+  if (!fecha || !FECHA_REGEX.test(fecha) || Number.isNaN(new Date(fecha).getTime())) {
+    return res.status(400).json({
+      error: "El parámetro fecha es obligatorio y debe tener el formato YYYY-MM-DD",
+    });
+  }
+
+  const { inicio, fin } = rangoUtcParaDiaLocal(fecha);
+
+  const { data, error } = await supabase
+    .from("solicitudes")
+    .select("fecha_hora")
+    .gte("fecha_hora", inicio.toISOString())
+    .lt("fecha_hora", fin.toISOString())
+    .in("estado", ESTADOS_QUE_OCUPAN_FRANJA);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json({
+    fecha,
+    franjas: generarFranjasHorarias(),
+    ocupadas: data.map((s) => horaLocal(s.fecha_hora)),
+  });
 });
 
 app.get("/clima", async (req, res) => {

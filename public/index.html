@@ -63,12 +63,26 @@
           <label for="contacto">Contacto (email o teléfono)</label>
           <input type="text" id="contacto" name="contacto" required />
 
+          <label for="categoria">Categoría</label>
+          <select id="categoria" name="categoria" required>
+            <option value="" disabled selected>Elegí una categoría</option>
+            <option value="Frenos">Frenos</option>
+            <option value="Carrocería">Carrocería</option>
+            <option value="Dirección">Dirección</option>
+            <option value="Motor">Motor</option>
+            <option value="Revisión general">Revisión general</option>
+            <option value="Otro">Otro</option>
+          </select>
+
           <label for="fecha">Fecha</label>
           <input type="date" id="fecha" name="fecha" required />
+          <p class="texto-ayuda">Atendemos de lunes a sábado, 7:00am a 4:30pm.</p>
           <div id="clima-info" class="clima-info"></div>
 
           <label for="hora">Hora</label>
-          <input type="time" id="hora" name="hora" required />
+          <select id="hora" name="hora" required>
+            <option value="" disabled selected>Elegí una fecha primero</option>
+          </select>
 
           <button type="submit">Solicitar cita</button>
         </form>

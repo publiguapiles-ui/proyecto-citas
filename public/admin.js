@@ -1,23 +1,54 @@
 const estadoAcceso = document.getElementById("estado-acceso");
-const tarjetaSolicitudes = document.getElementById("tarjeta-solicitudes");
+const panelAdmin = document.getElementById("panel-admin");
 const listaSolicitudes = document.getElementById("lista-solicitudes");
 const btnSalir = document.getElementById("btn-salir");
+const agendaFecha = document.getElementById("agenda-fecha");
+const agendaLista = document.getElementById("agenda-lista");
 
 let clienteSupabase = null;
 let sesionActual = null;
+let solicitudesActuales = [];
+
+const ZONA_HORARIA = "America/Costa_Rica";
 
 function rechazarAcceso(mensaje) {
   estadoAcceso.innerHTML = `<p class="mensaje-error">${mensaje}</p><p><a href="login.html">Ir a iniciar sesión</a></p>`;
-  tarjetaSolicitudes.style.display = "none";
+  panelAdmin.style.display = "none";
 }
 
 function esPasada(fechaHoraIso) {
   return new Date(fechaHoraIso).getTime() < Date.now();
 }
 
-function botonAccion(solicitud) {
+function horaLocalCR(fechaHoraIso) {
+  return new Date(fechaHoraIso).toLocaleTimeString("en-GB", {
+    timeZone: ZONA_HORARIA,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function fechaLocalCR(fechaHoraIso) {
+  return new Date(fechaHoraIso).toLocaleDateString("en-CA", { timeZone: ZONA_HORARIA });
+}
+
+function generarFranjas() {
+  const franjas = [];
+  for (let min = 7 * 60; min <= 16 * 60 + 30; min += 30) {
+    const hh = String(Math.floor(min / 60)).padStart(2, "0");
+    const mm = String(min % 60).padStart(2, "0");
+    franjas.push(`${hh}:${mm}`);
+  }
+  return franjas;
+}
+
+function botonesAccion(solicitud) {
   if (solicitud.estado === "pendiente") {
-    return `<button class="boton-accion btn-confirmar" data-codigo="${solicitud.codigo_seguimiento}">Confirmar</button>`;
+    return `
+      <button class="boton-accion btn-confirmar" data-codigo="${solicitud.codigo_seguimiento}">Confirmar</button>
+      <button class="boton-accion btn-rechazar" data-codigo="${solicitud.codigo_seguimiento}">Rechazar</button>
+    `;
   }
 
   if (solicitud.estado === "confirmada" && esPasada(solicitud.fecha_hora)) {
@@ -38,15 +69,58 @@ function renderSolicitudes(solicitudes) {
       (s) => `
       <div class="fila-solicitud">
         <div class="fila-info">
-          <strong>${s.codigo_seguimiento}</strong> — ${s.nombre} (${s.contacto})<br />
+          <strong>${s.codigo_seguimiento}</strong> — ${s.nombre} (${s.contacto})
+          ${s.categoria ? `· ${s.categoria}` : ""}<br />
           ${new Date(s.fecha_hora).toLocaleString()} · Estado:
           <span class="estado-badge estado-${s.estado}">${s.estado}</span>
         </div>
-        <div class="fila-acciones">${botonAccion(s)}</div>
+        <div class="fila-acciones">${botonesAccion(s)}</div>
       </div>
     `
     )
     .join("");
+}
+
+function renderAgenda() {
+  const fecha = agendaFecha.value;
+  if (!fecha) {
+    agendaLista.innerHTML = "";
+    return;
+  }
+
+  agendaLista.innerHTML = generarFranjas()
+    .map((franja) => {
+      const solicitud = solicitudesActuales.find(
+        (s) => fechaLocalCR(s.fecha_hora) === fecha && horaLocalCR(s.fecha_hora) === franja
+      );
+
+      if (!solicitud) {
+        return `
+          <div class="agenda-franja">
+            <span class="agenda-hora">${franja}</span>
+            <span class="agenda-detalle agenda-libre">Libre</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="agenda-franja ocupada">
+          <span class="agenda-hora">${franja}</span>
+          <span class="agenda-detalle">
+            <strong>${solicitud.codigo_seguimiento}</strong> — ${solicitud.nombre}
+            ${solicitud.categoria ? `(${solicitud.categoria})` : ""}
+            <span class="estado-badge estado-${solicitud.estado}">${solicitud.estado}</span>
+          </span>
+          <span class="fila-acciones">${botonesAccion(solicitud)}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderTodo() {
+  renderSolicitudes(solicitudesActuales);
+  renderAgenda();
 }
 
 async function cargarSolicitudes() {
@@ -60,8 +134,8 @@ async function cargarSolicitudes() {
     return;
   }
 
-  const solicitudes = await respuesta.json();
-  renderSolicitudes(solicitudes);
+  solicitudesActuales = await respuesta.json();
+  renderTodo();
 }
 
 async function cambiarEstado(codigo, ruta, boton) {
@@ -87,17 +161,32 @@ async function cambiarEstado(codigo, ruta, boton) {
   }
 }
 
-listaSolicitudes.addEventListener("click", (evento) => {
+function alClicAccion(evento) {
   const boton = evento.target;
   const codigo = boton.dataset.codigo;
   if (!codigo) return;
 
   if (boton.classList.contains("btn-confirmar")) {
     cambiarEstado(codigo, "confirmar", boton);
+  } else if (boton.classList.contains("btn-rechazar")) {
+    cambiarEstado(codigo, "rechazar", boton);
   } else if (boton.classList.contains("btn-noshow")) {
     cambiarEstado(codigo, "no-show", boton);
   }
-});
+}
+
+listaSolicitudes.addEventListener("click", alClicAccion);
+agendaLista.addEventListener("click", alClicAccion);
+
+agendaFecha.addEventListener("change", renderAgenda);
+
+function ponerFechaDeHoyEnAgenda() {
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+  const dd = String(hoy.getDate()).padStart(2, "0");
+  agendaFecha.value = `${yyyy}-${mm}-${dd}`;
+}
 
 async function iniciar() {
   const config = await fetch("/api/config").then((r) => r.json());
@@ -108,14 +197,16 @@ async function iniciar() {
   } = await clienteSupabase.auth.getSession();
 
   if (!session) {
-    rechazarAcceso("Acceso denegado: no hay una sesión activa. Iniciá sesión con tu enlace mágico.");
+    rechazarAcceso("Acceso denegado: no hay una sesión activa. Iniciá sesión con tu email y contraseña.");
     return;
   }
 
   sesionActual = session;
 
   estadoAcceso.style.display = "none";
-  tarjetaSolicitudes.style.display = "block";
+  panelAdmin.style.display = "block";
+
+  ponerFechaDeHoyEnAgenda();
   await cargarSolicitudes();
 
   btnSalir.addEventListener("click", async () => {

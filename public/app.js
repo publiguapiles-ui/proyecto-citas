@@ -5,6 +5,7 @@ const formConsultar = document.getElementById("form-consultar");
 const consultarResultado = document.getElementById("consultar-resultado");
 
 const inputFecha = document.getElementById("fecha");
+const selectHora = document.getElementById("hora");
 const climaInfo = document.getElementById("clima-info");
 
 function mostrarMensaje(contenedor, mensaje, esError) {
@@ -18,6 +19,11 @@ function ponerFechaDeHoyPorDefecto() {
   const mm = String(hoy.getMonth() + 1).padStart(2, "0");
   const dd = String(hoy.getDate()).padStart(2, "0");
   inputFecha.value = `${yyyy}-${mm}-${dd}`;
+}
+
+function esDomingo(fechaYYYYMMDD) {
+  const [y, m, d] = fechaYYYYMMDD.split("-").map(Number);
+  return new Date(y, m - 1, d).getDay() === 0;
 }
 
 async function actualizarClima() {
@@ -53,16 +59,60 @@ async function actualizarClima() {
   }
 }
 
-inputFecha.addEventListener("change", actualizarClima);
+async function actualizarHorasDisponibles() {
+  const fecha = inputFecha.value;
+  selectHora.innerHTML = "";
+
+  if (!fecha) {
+    selectHora.innerHTML = '<option value="" disabled selected>Elegí una fecha primero</option>';
+    return;
+  }
+
+  if (esDomingo(fecha)) {
+    selectHora.innerHTML = '<option value="" disabled selected>Cerrado los domingos</option>';
+    return;
+  }
+
+  selectHora.innerHTML = '<option value="" disabled selected>Cargando horarios...</option>';
+
+  try {
+    const respuesta = await fetch(`/disponibilidad?fecha=${encodeURIComponent(fecha)}`);
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      selectHora.innerHTML = '<option value="" disabled selected>No se pudo cargar la disponibilidad</option>';
+      return;
+    }
+
+    const opciones = ['<option value="" disabled selected>Elegí una hora</option>'];
+    for (const franja of datos.franjas) {
+      const ocupada = datos.ocupadas.includes(franja);
+      opciones.push(
+        `<option value="${franja}" ${ocupada ? "disabled" : ""}>${franja}${ocupada ? " (ocupado)" : ""}</option>`
+      );
+    }
+    selectHora.innerHTML = opciones.join("");
+  } catch (err) {
+    selectHora.innerHTML = '<option value="" disabled selected>No se pudo conectar con el servidor</option>';
+  }
+}
+
+async function alCambiarFecha() {
+  actualizarClima();
+  await actualizarHorasDisponibles();
+}
+
+inputFecha.addEventListener("change", alCambiarFecha);
 
 ponerFechaDeHoyPorDefecto();
-actualizarClima();
+alCambiarFecha();
 
 formCrear.addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
   const nombre = document.getElementById("nombre").value;
   const contacto = document.getElementById("contacto").value;
+  const categoria = document.getElementById("categoria").value;
   const fecha = document.getElementById("fecha").value;
   const hora = document.getElementById("hora").value;
   // new Date("YYYY-MM-DDTHH:mm") se interpreta en la hora local del navegador;
@@ -74,13 +124,16 @@ formCrear.addEventListener("submit", async (evento) => {
     const respuesta = await fetch("/solicitudes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, contacto, fecha_hora }),
+      body: JSON.stringify({ nombre, contacto, categoria, fecha_hora }),
     });
 
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
       mostrarMensaje(crearResultado, datos.error || "Ocurrió un error", true);
+      if (respuesta.status === 409) {
+        actualizarHorasDisponibles();
+      }
       return;
     }
 
@@ -91,7 +144,7 @@ formCrear.addEventListener("submit", async (evento) => {
     );
     formCrear.reset();
     ponerFechaDeHoyPorDefecto();
-    actualizarClima();
+    alCambiarFecha();
   } catch (err) {
     mostrarMensaje(crearResultado, "No se pudo conectar con el servidor", true);
   }
@@ -113,7 +166,7 @@ formConsultar.addEventListener("submit", async (evento) => {
 
     mostrarMensaje(
       consultarResultado,
-      `Nombre: ${datos.nombre} | Fecha y hora: ${new Date(datos.fecha_hora).toLocaleString()} | Estado: ${datos.estado}`,
+      `Nombre: ${datos.nombre} | Categoría: ${datos.categoria || "—"} | Fecha y hora: ${new Date(datos.fecha_hora).toLocaleString()} | Estado: ${datos.estado}`,
       false
     );
   } catch (err) {

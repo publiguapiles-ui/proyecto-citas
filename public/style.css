@@ -126,12 +126,20 @@ label {
   font-size: 0.9rem;
 }
 
-input {
+input,
+select {
   font-family: inherit;
   padding: 10px;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 6px;
+  background-color: white;
+  color: #222;
+}
+
+select:disabled,
+select option:disabled {
+  color: #aaa;
 }
 
 .clima-info {
@@ -152,7 +160,8 @@ input {
   font-style: italic;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: none;
   border-color: var(--rojo);
 }
@@ -263,9 +272,15 @@ button:hover {
   color: #1a4d2e;
 }
 
-.estado-no-show {
+.estado-no-show,
+.estado-rechazada {
   background-color: #fdecea;
   color: #7a2318;
+}
+
+.fila-acciones {
+  display: flex;
+  gap: 6px;
 }
 
 .boton-accion {
@@ -273,4 +288,65 @@ button:hover {
   padding: 6px 12px;
   font-size: 0.75rem;
   white-space: nowrap;
+}
+
+.btn-rechazar {
+  background-color: #666;
+}
+
+.btn-rechazar:hover {
+  background-color: #444;
+}
+
+.agenda-controles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.agenda-controles input {
+  max-width: 200px;
+}
+
+.agenda-lista {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.agenda-franja {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+}
+
+.agenda-franja:last-child {
+  border-bottom: none;
+}
+
+.agenda-hora {
+  font-family: "Oswald", "Inter", sans-serif;
+  font-weight: 600;
+  width: 56px;
+  flex-shrink: 0;
+  color: #444;
+}
+
+.agenda-detalle {
+  flex: 1;
+}
+
+.agenda-libre {
+  color: #aaa;
+  font-style: italic;
+}
+
+.agenda-franja.ocupada {
+  background-color: #fafafa;
 }

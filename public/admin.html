@@ -26,13 +26,24 @@
         <p>Verificando sesión...</p>
       </section>
 
-      <section class="tarjeta" id="tarjeta-solicitudes" style="display: none">
-        <h2>
-          Solicitudes
-          <button id="btn-salir" class="boton-secundario">Cerrar sesión</button>
-        </h2>
-        <div id="lista-solicitudes"></div>
-      </section>
+      <div id="panel-admin" style="display: none">
+        <section class="tarjeta">
+          <h2>
+            Agenda
+            <button id="btn-salir" class="boton-secundario">Cerrar sesión</button>
+          </h2>
+          <div class="agenda-controles">
+            <label for="agenda-fecha">Día</label>
+            <input type="date" id="agenda-fecha" />
+          </div>
+          <div id="agenda-lista" class="agenda-lista"></div>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Todas las solicitudes</h2>
+          <div id="lista-solicitudes"></div>
+        </section>
+      </div>
     </main>
   </div>
 
