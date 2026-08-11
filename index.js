@@ -6,7 +6,7 @@ const supabase = require("./supabaseClient");
 const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
 const { obtenerClima } = require("./clima");
 const { requireAuth } = require("./authMiddleware");
-const { enviarCorreoSolicitudRecibida, enviarCorreoConfirmacion } = require("./resend");
+const { enviarCorreoSolicitudRecibida, enviarCorreoConfirmacion, enviarCorreoRechazo } = require("./resend");
 const { generarFranjasHorarias, esHorarioValido, rangoUtcParaDiaLocal, horaLocal } = require("./horarios");
 
 const app = express();
@@ -237,7 +237,24 @@ app.patch("/solicitudes/:codigo/rechazar", async (req, res) => {
     });
   }
 
-  res.json(data);
+  let email_enviado = false;
+  let email_error = null;
+
+  if (EMAIL_REGEX.test(data.contacto)) {
+    try {
+      await enviarCorreoRechazo({
+        nombre: data.nombre,
+        contacto: data.contacto,
+        codigo_seguimiento: data.codigo_seguimiento,
+        fecha_hora: data.fecha_hora,
+      });
+      email_enviado = true;
+    } catch (err) {
+      email_error = err.message;
+    }
+  }
+
+  res.json({ ...data, email_enviado, email_error });
 });
 
 app.get("/disponibilidad", async (req, res) => {

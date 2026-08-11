@@ -66,4 +66,18 @@ async function enviarCorreoConfirmacion({ nombre, contacto, codigo_seguimiento, 
   });
 }
 
-module.exports = { enviarCorreoSolicitudRecibida, enviarCorreoConfirmacion };
+async function enviarCorreoRechazo({ nombre, contacto, codigo_seguimiento, fecha_hora }) {
+  return enviarCorreo({
+    contacto,
+    subject: "Tu solicitud de cita fue rechazada",
+    html: `
+      <h2>Hola ${nombre},</h2>
+      <p>Lamentablemente no podemos atender tu solicitud de cita en <strong>Taller Mecánica Automotriz Madrigal</strong> para la fecha y hora que elegiste.</p>
+      <p><strong>Código de seguimiento:</strong> ${codigo_seguimiento}</p>
+      <p><strong>Fecha y hora solicitada:</strong> ${formatearFecha(fecha_hora)}</p>
+      <p>Podés escribirnos o solicitar una nueva cita en otro horario cuando quieras.</p>
+    `,
+  });
+}
+
+module.exports = { enviarCorreoSolicitudRecibida, enviarCorreoConfirmacion, enviarCorreoRechazo };
