@@ -5,6 +5,7 @@ const express = require("express");
 const supabase = require("./supabaseClient");
 const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
 const { obtenerClima } = require("./clima");
+const { requireAuth } = require("./authMiddleware");
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +23,13 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/api/config", (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+  });
 });
 
 app.post("/solicitudes", async (req, res) => {
@@ -143,6 +151,19 @@ app.get("/clima", async (req, res) => {
     }
     res.status(500).json({ error: "Error inesperado al consultar el clima" });
   }
+});
+
+app.get("/api/admin/solicitudes", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("solicitudes")
+    .select()
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json(data);
 });
 
 app.listen(PORT, () => {

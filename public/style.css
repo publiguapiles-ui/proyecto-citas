@@ -184,3 +184,31 @@ button:hover {
   border: 1px solid var(--rojo);
   color: #7a2318;
 }
+
+.texto-ayuda {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0;
+}
+
+.boton-secundario {
+  margin-top: 0;
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  background-color: #444;
+}
+
+.boton-secundario:hover {
+  background-color: #222;
+}
+
+.fila-solicitud {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.fila-solicitud:last-child {
+  border-bottom: none;
+}

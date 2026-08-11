@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar sesión - Admin</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="pagina">
+    <header class="encabezado">
+      <img src="img/logo-taller.png" alt="Taller Mecánica Automotriz Madrigal" class="logo" />
+      <p class="subtitulo">Panel de administración</p>
+    </header>
+
+    <main class="contenedor">
+      <section class="tarjeta">
+        <h2>Iniciar sesión</h2>
+        <p class="texto-ayuda">
+          Ingresá tu email y te enviamos un enlace mágico para entrar sin contraseña.
+        </p>
+        <form id="form-login">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+
+          <button type="submit">Enviar enlace mágico</button>
+        </form>
+        <div id="login-resultado" class="resultado"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>
