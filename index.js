@@ -4,12 +4,14 @@ const path = require("path");
 const express = require("express");
 const supabase = require("./supabaseClient");
 const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
+const { obtenerClima } = require("./clima");
 
 const app = express();
 const PORT = 3000;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO_REGEX = /^[+\d][\d\s-]{7,14}\d$/;
+const FECHA_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 function esContactoValido(contacto) {
   return EMAIL_REGEX.test(contacto) || TELEFONO_REGEX.test(contacto);
@@ -113,6 +115,34 @@ app.patch("/solicitudes/:codigo/confirmar", async (req, res) => {
   }
 
   res.json(data);
+});
+
+app.get("/clima", async (req, res) => {
+  const { fecha } = req.query;
+
+  if (!fecha || !FECHA_REGEX.test(fecha) || Number.isNaN(new Date(fecha).getTime())) {
+    return res.status(400).json({
+      error: "El parámetro fecha es obligatorio y debe tener el formato YYYY-MM-DD",
+    });
+  }
+
+  try {
+    const pronostico = await obtenerClima(fecha);
+    res.json(pronostico);
+  } catch (error) {
+    if (error.codigo === "CONFIG") {
+      return res.status(500).json({ error: error.message });
+    }
+    if (error.codigo === "SIN_DATOS") {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.codigo === "API_EXTERNA") {
+      return res.status(502).json({
+        error: `No se pudo obtener el pronóstico de OpenWeatherMap: ${error.message}`,
+      });
+    }
+    res.status(500).json({ error: "Error inesperado al consultar el clima" });
+  }
 });
 
 app.listen(PORT, () => {
