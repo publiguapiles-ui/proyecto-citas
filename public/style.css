@@ -204,6 +204,10 @@ button:hover {
 }
 
 .fila-solicitud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   padding: 10px 0;
   border-bottom: 1px solid #eee;
   font-size: 0.9rem;
@@ -211,4 +215,44 @@ button:hover {
 
 .fila-solicitud:last-child {
   border-bottom: none;
+}
+
+.fila-info {
+  flex: 1;
+}
+
+.fila-acciones {
+  flex-shrink: 0;
+}
+
+.estado-badge {
+  font-family: "Oswald", "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.estado-pendiente {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.estado-confirmada {
+  background-color: #e6f4ea;
+  color: #1a4d2e;
+}
+
+.estado-no-show {
+  background-color: #fdecea;
+  color: #7a2318;
+}
+
+.boton-accion {
+  margin-top: 0;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }

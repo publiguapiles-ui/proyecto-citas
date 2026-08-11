@@ -125,6 +125,29 @@ app.patch("/solicitudes/:codigo/confirmar", async (req, res) => {
   res.json(data);
 });
 
+app.patch("/solicitudes/:codigo/no-show", async (req, res) => {
+  const { codigo } = req.params;
+
+  const { data, error } = await supabase
+    .from("solicitudes")
+    .update({ estado: "no-show" })
+    .eq("codigo_seguimiento", codigo)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  if (!data) {
+    return res.status(404).json({
+      error: `No se encontró ninguna solicitud con el código ${codigo}`,
+    });
+  }
+
+  res.json(data);
+});
+
 app.get("/clima", async (req, res) => {
   const { fecha } = req.query;
 
