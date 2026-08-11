@@ -19,24 +19,16 @@ async function iniciar() {
   formLogin.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-    const { error } = await client.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/admin.html`,
-      },
-    });
+    const { error } = await client.auth.signInWithPassword({ email, password });
 
     if (error) {
-      mostrarMensaje(loginResultado, `Error al enviar el enlace: ${error.message}`, true);
+      mostrarMensaje(loginResultado, "Email o contraseña incorrectos", true);
       return;
     }
 
-    mostrarMensaje(
-      loginResultado,
-      `Te enviamos un enlace mágico a ${email}. Abrilo desde este mismo navegador para iniciar sesión.`,
-      false
-    );
+    window.location.href = "admin.html";
   });
 }
 
