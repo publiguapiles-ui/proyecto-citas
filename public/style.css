@@ -134,6 +134,24 @@ input {
   border-radius: 6px;
 }
 
+.clima-info {
+  font-size: 0.8rem;
+  margin-top: -2px;
+}
+
+.clima-info:empty {
+  display: none;
+}
+
+.clima-disponible {
+  color: #1a4d2e;
+}
+
+.clima-sin-dato {
+  color: #888;
+  font-style: italic;
+}
+
 input:focus {
   outline: none;
   border-color: var(--rojo);

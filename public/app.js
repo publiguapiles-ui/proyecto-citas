@@ -5,6 +5,7 @@ const formConsultar = document.getElementById("form-consultar");
 const consultarResultado = document.getElementById("consultar-resultado");
 
 const inputFecha = document.getElementById("fecha");
+const climaInfo = document.getElementById("clima-info");
 
 function mostrarMensaje(contenedor, mensaje, esError) {
   contenedor.textContent = mensaje;
@@ -19,7 +20,43 @@ function ponerFechaDeHoyPorDefecto() {
   inputFecha.value = `${yyyy}-${mm}-${dd}`;
 }
 
+async function actualizarClima() {
+  const fecha = inputFecha.value;
+  if (!fecha) {
+    climaInfo.textContent = "";
+    return;
+  }
+
+  climaInfo.textContent = "Consultando el clima...";
+  climaInfo.className = "clima-info";
+
+  try {
+    const respuesta = await fetch(`/clima?fecha=${encodeURIComponent(fecha)}`);
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      // El pronóstico gratuito de OpenWeatherMap solo cubre ~5 días:
+      // para la mayoría de las fechas de una cita simplemente no hay dato,
+      // así que lo mostramos como aviso discreto, no como error.
+      climaInfo.textContent =
+        respuesta.status === 404
+          ? "Pronóstico no disponible todavía para esta fecha (solo se puede ver desde ~5 días antes)."
+          : datos.error || "No se pudo obtener el clima";
+      climaInfo.className = "clima-info clima-sin-dato";
+      return;
+    }
+
+    climaInfo.textContent = `🌤️ Pronóstico para ${datos.fecha}: ${datos.temperatura_min}°C - ${datos.temperatura_max}°C, ${datos.descripcion}`;
+    climaInfo.className = "clima-info clima-disponible";
+  } catch (err) {
+    climaInfo.textContent = "";
+  }
+}
+
+inputFecha.addEventListener("change", actualizarClima);
+
 ponerFechaDeHoyPorDefecto();
+actualizarClima();
 
 formCrear.addEventListener("submit", async (evento) => {
   evento.preventDefault();
@@ -54,6 +91,7 @@ formCrear.addEventListener("submit", async (evento) => {
     );
     formCrear.reset();
     ponerFechaDeHoyPorDefecto();
+    actualizarClima();
   } catch (err) {
     mostrarMensaje(crearResultado, "No se pudo conectar con el servidor", true);
   }
