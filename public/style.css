@@ -43,6 +43,23 @@ body {
   margin-top: 6px;
 }
 
+.redes {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.redes a {
+  color: #999;
+  display: inline-flex;
+  transition: color 0.15s;
+}
+
+.redes a:hover {
+  color: var(--rojo);
+}
+
 .contenedor {
   display: flex;
   flex-direction: column;
@@ -63,6 +80,38 @@ body {
   margin-top: 0;
   font-size: 1.2rem;
   color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icono-titulo {
+  color: var(--rojo);
+  flex-shrink: 0;
+}
+
+.marcas h2 {
+  justify-content: center;
+}
+
+.marcas-lista {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.marca-chip {
+  font-family: "Oswald", "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  color: #444;
 }
 
 form {
