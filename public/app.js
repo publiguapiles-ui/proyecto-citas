@@ -4,17 +4,31 @@ const crearResultado = document.getElementById("crear-resultado");
 const formConsultar = document.getElementById("form-consultar");
 const consultarResultado = document.getElementById("consultar-resultado");
 
+const inputFecha = document.getElementById("fecha");
+
 function mostrarMensaje(contenedor, mensaje, esError) {
   contenedor.textContent = mensaje;
   contenedor.className = esError ? "mensaje-error" : "mensaje-ok";
 }
+
+function ponerFechaDeHoyPorDefecto() {
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, "0");
+  const dd = String(hoy.getDate()).padStart(2, "0");
+  inputFecha.value = `${yyyy}-${mm}-${dd}`;
+}
+
+ponerFechaDeHoyPorDefecto();
 
 formCrear.addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
   const nombre = document.getElementById("nombre").value;
   const contacto = document.getElementById("contacto").value;
-  const fecha_hora = document.getElementById("fecha_hora").value;
+  const fecha = document.getElementById("fecha").value;
+  const hora = document.getElementById("hora").value;
+  const fecha_hora = `${fecha}T${hora}`;
 
   try {
     const respuesta = await fetch("/solicitudes", {
@@ -36,6 +50,7 @@ formCrear.addEventListener("submit", async (evento) => {
       false
     );
     formCrear.reset();
+    ponerFechaDeHoyPorDefecto();
   } catch (err) {
     mostrarMensaje(crearResultado, "No se pudo conectar con el servidor", true);
   }
