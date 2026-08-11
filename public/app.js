@@ -28,7 +28,10 @@ formCrear.addEventListener("submit", async (evento) => {
   const contacto = document.getElementById("contacto").value;
   const fecha = document.getElementById("fecha").value;
   const hora = document.getElementById("hora").value;
-  const fecha_hora = `${fecha}T${hora}`;
+  // new Date("YYYY-MM-DDTHH:mm") se interpreta en la hora local del navegador;
+  // toISOString() la convierte a UTC explícito para que el servidor (que corre
+  // en otra zona horaria) no la reinterprete como si fuera su propia hora local.
+  const fecha_hora = new Date(`${fecha}T${hora}`).toISOString();
 
   try {
     const respuesta = await fetch("/solicitudes", {
