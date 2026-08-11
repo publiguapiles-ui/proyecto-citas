@@ -6,6 +6,7 @@ const supabase = require("./supabaseClient");
 const { generarCodigoSeguimiento } = require("./codigoSeguimiento");
 const { obtenerClima } = require("./clima");
 const { requireAuth } = require("./authMiddleware");
+const { enviarCorreoConfirmacion } = require("./resend");
 
 const app = express();
 const PORT = 3000;
@@ -122,7 +123,24 @@ app.patch("/solicitudes/:codigo/confirmar", async (req, res) => {
     });
   }
 
-  res.json(data);
+  let email_enviado = false;
+  let email_error = null;
+
+  if (EMAIL_REGEX.test(data.contacto)) {
+    try {
+      await enviarCorreoConfirmacion({
+        nombre: data.nombre,
+        contacto: data.contacto,
+        codigo_seguimiento: data.codigo_seguimiento,
+        fecha_hora: data.fecha_hora,
+      });
+      email_enviado = true;
+    } catch (err) {
+      email_error = err.message;
+    }
+  }
+
+  res.json({ ...data, email_enviado, email_error });
 });
 
 app.patch("/solicitudes/:codigo/no-show", async (req, res) => {
